@@ -1,19 +1,28 @@
 # Reproducible Research: Peer Assessment 1
+Submitted by Tucker Doud
 
+The following report outlines in detail the steps required to process  
+and analyze activity data from a personal activity monitoring device.  
+The device collects data on _number of steps taken_ at 5 minute intervals  
+thoughout the day. The data consists of two months of data from an  
+anonumous individual collected during the months of October and November  
+2012. The original unprocessed file can be found [HERE](https://github.com/jtdoud/RepData_PeerAssessment1/tree/master/Data).
 
 ## Loading and preprocessing the data
+Loads the required library and imports the activty data. The date  
+column is converted to a date format recognizable by R.
 
 
 ```r
 library(ggplot2)
-
 setwd("~/My Dropbox/Education/ReproducibleResearch/RepData_PeerAssessment1")
 data <- read.csv(file="./Data/activity.csv", stringsAsFactors= F)
 data$date <- as.Date(data$date)
 ```
 
-
 ## What is mean total number of steps taken per day?
+Compute the mean steps per day using `tapply` and covert to a data frame.  
+Plot the data using the ggplot2 package.
 
 
 ```r
@@ -25,11 +34,9 @@ ggplot(data=stepPerDay, aes(x=stepPerDay)) + geom_histogram() +
         ggtitle(label= "Histogram\n Steps per Day")
 ```
 
-```
-## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
-```
+![plot of chunk StepsPerDay](figure/StepsPerDay.png) 
 
-![plot of chunk unnamed-chunk-2](figure/unnamed-chunk-2.png) 
+Compute the *mean* and *median* total number of steps per day.
 
 ```r
 mean(stepPerDay$stepPerDay, na.rm=T)
@@ -48,18 +55,24 @@ median(stepPerDay$stepPerDay, na.rm=T)
 ```
 
 ## What is the average daily activity pattern?
+Initialize a new data frame called `meanPerInt` that contains the  
+computed _mean per interval_ and plot the result.
 
 
 ```r
 meanPerInt <- aggregate.data.frame(x= data[ , 1], 
                                    by= list(data$interval), 
                                    FUN= mean, na.rm= T)
-names(meanPerInt) <- c("interval", "meanSteps")
+names(meanPerInt) <- c("interval", "meanSteps") #rename columns
 
-ggplot(data=meanPerInt, aes(x=interval, y=meanSteps)) + geom_line()
+ggplot(data=meanPerInt, aes(x=interval, y=meanSteps)) + geom_line() +
+        xlab(label= "Interval") + ylab(label= "Mean Steps") +
+        ggtitle(label= "Mean Steps per Interval")
 ```
 
-![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3.png) 
+![plot of chunk AvgDailyActivity](figure/AvgDailyActivity.png) 
+
+Compute the 5 minute interval that contains the maximum number of steps.
 
 ```r
 max(meanPerInt$meanSteps)
@@ -69,12 +82,9 @@ max(meanPerInt$meanSteps)
 ## [1] 206.2
 ```
 
-
 ## Imputing missing values
-
-Simply fill the missing values in the original data set with the mean   values from new table created in the preceeding step!
-
-Compute number of missing observations
+The raw data contains missing values. Compute number of missing  
+observations
 
 ```r
 length(which(complete.cases(data)== F))
@@ -84,55 +94,36 @@ length(which(complete.cases(data)== F))
 ## [1] 2304
 ```
 
-add rounded mean step per interval for imputation
+My next step is to impute the missing values. Since I already computed  
+the mean steps per inteval in the section above, I will use this data  
+to fill in the missing values in the original data.
 
+First I add a rounded mean steps per interval to `meanPerInt`.
 
 ```r
 meanPerInt$meanStepsR <- round(x=meanPerInt$meanSteps, digits=0)
-head(meanPerInt)
 ```
 
-```
-##   interval meanSteps meanStepsR
-## 1        0   1.71698          2
-## 2        5   0.33962          0
-## 3       10   0.13208          0
-## 4       15   0.15094          0
-## 5       20   0.07547          0
-## 6       25   2.09434          2
-```
-
-make data subset of NA observations with rounded average taken from  
-meanPerInt frame
-
+Then I make data subset of the original NA observations and call it  
+`iData` for _imputed_ data. I `merge` the data to the rounded mean steps  
+from the `meanPerInt` data frame.
 
 ```r
 iData <- merge(x=data[which(is.na(data$steps)), ], 
                y=meanPerInt[, c(1,3)])[, -2]
 iData <- iData[, c(3,2,1)] #reorder for rbind
 names(iData) <- names(data) #rename for rbind
-head(iData)
 ```
 
-```
-##   steps       date interval
-## 1     2 2012-10-01        0
-## 2     2 2012-11-30        0
-## 3     2 2012-11-04        0
-## 4     2 2012-11-09        0
-## 5     2 2012-11-14        0
-## 6     2 2012-11-10        0
-```
-
-rbind imputed data with original complete data
-
+Use `rbind` to link the imputed data subset with original complete  
+observations and call it `nData` for _new data_.
 
 ```r
 nData <- rbind(data[which(!is.na(data$steps)), ], iData)
 nData <- nData[order(nData$date, nData$interval), ] #reorder
 ```
 
-Make Histogram with new data
+Compute the new _imputed_ steps per day using `nData`. Make a histogram  with the new data.
 
 ```r
 nStepPerDay <- tapply(X=nData$steps, INDEX=nData$date, FUN=sum)
@@ -147,7 +138,9 @@ ggplot(data=nStepPerDay, aes(x=nStepPerDay)) + geom_histogram() +
 ## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
 ```
 
-![plot of chunk unnamed-chunk-8](figure/unnamed-chunk-8.png) 
+![plot of chunk ImpStepPerDay](figure/ImpStepPerDay.png) 
+
+Compute the new mean and median using `nData`.
 
 ```r
 mean(nStepPerDay$nStepPerDay)
@@ -165,4 +158,39 @@ median(nStepPerDay$nStepPerDay)
 ## [1] 10762
 ```
 
+Note that the new mean and median values from the imputed data differ  
+from the original data set by 0.5493 and 3 respectively.
+
 ## Are there differences in activity patterns between weekdays and weekends?
+The next stage of the analysis examines the difference in mean steps per  
+interval between weekends and weekdays. First I must convert the dates to  
+a weekend/weekday factor.
+
+
+```r
+nData$weekDay <- as.factor(weekdays(x=nData$date, abbreviate=T))
+nData$weekDayRC <- as.factor(ifelse(test=nData$weekDay=="Sat" | 
+                                nData$weekDay== "Sun", yes="Weekend", 
+                                no="Weekday"))
+```
+
+Using the new data with the imputed values `nData` I then compute a new  
+data frame with the mean steps per inteval and call it `nMeanPerInt`. I  
+do a facetted plot to compare weekens to weekdays.
+
+
+```r
+nMeanPerInt <- aggregate.data.frame(x= nData[ , 1], 
+                                   by= list(nData$interval,
+                                            nData$weekDayRC), 
+                                   FUN= mean, na.rm= T)
+
+names(nMeanPerInt) <- c("interval", "weekDay", "meanSteps") #rename
+
+ggplot(data=nMeanPerInt, aes(x=interval, y=meanSteps)) + geom_line() +
+        facet_grid(weekDay ~ .) +
+        xlab(label= "Interval") + ylab(label= "Mean Steps") +
+        ggtitle(label= "Mean Steps per Interval (facetted)")
+```
+
+![plot of chunk FacetPlot](figure/FacetPlot.png) 
