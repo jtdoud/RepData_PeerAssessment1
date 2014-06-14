@@ -9,7 +9,7 @@ anonumous individual collected during the months of October and November
 2012. The original unprocessed file can be found [HERE](https://github.com/jtdoud/RepData_PeerAssessment1/tree/master/Data).
 
 ## Loading and preprocessing the data
-Loads the required library and imports the activty data. The date  
+Load the required library and import the activty data. The date  
 column is converted to a date format recognizable by R.
 
 
@@ -27,7 +27,7 @@ Plot the data using the ggplot2 package.
 
 ```r
 stepPerDay <- tapply(X=data$steps, INDEX=data$date, FUN=sum)
-stepPerDay <- as.data.frame.array(x=stepPerDay)           
+stepPerDay <- as.data.frame(x=stepPerDay)           
 
 ggplot(data=stepPerDay, aes(x=stepPerDay)) + geom_histogram() + 
         xlab(label= "Steps per Day") + ylab(label= "Count") +
@@ -94,17 +94,17 @@ length(which(complete.cases(data)== F))
 ## [1] 2304
 ```
 
-My next step is to impute the missing values. Since I already computed  
+My next task is to impute the missing values. Since I already computed  
 the mean steps per inteval in the section above, I will use this data  
 to fill in the missing values in the original data.
 
-First I add a rounded mean steps per interval to `meanPerInt`.
+First I add a rounded mean steps per interval to `meanPerInt` since there are not half-steps in reality. I call it `meanStepsR` for _rounded_.
 
 ```r
 meanPerInt$meanStepsR <- round(x=meanPerInt$meanSteps, digits=0)
 ```
 
-Then I make data subset of the original NA observations and call it  
+Then I make a data subset of the original NA observations and call it  
 `iData` for _imputed_ data. I `merge` the data to the rounded mean steps  
 from the `meanPerInt` data frame.
 
@@ -115,8 +115,8 @@ iData <- iData[, c(3,2,1)] #reorder for rbind
 names(iData) <- names(data) #rename for rbind
 ```
 
-Use `rbind` to link the imputed data subset with original complete  
-observations and call it `nData` for _new data_.
+Use `rbind` to link the imputed data subset with original data - complete  
+observations only - and call it `nData` for _new data_.
 
 ```r
 nData <- rbind(data[which(!is.na(data$steps)), ], iData)
@@ -127,15 +127,11 @@ Compute the new _imputed_ steps per day using `nData`. Make a histogram  with th
 
 ```r
 nStepPerDay <- tapply(X=nData$steps, INDEX=nData$date, FUN=sum)
-nStepPerDay <- as.data.frame.array(x=nStepPerDay) 
+nStepPerDay <- as.data.frame(x=nStepPerDay) 
 
 ggplot(data=nStepPerDay, aes(x=nStepPerDay)) + geom_histogram() + 
         xlab(label= "Steps per Day") + ylab(label= "Count") +
         ggtitle(label= "Histogram (Imputed Values)\nSteps per Day")
-```
-
-```
-## stat_bin: binwidth defaulted to range/30. Use 'binwidth = x' to adjust this.
 ```
 
 ![plot of chunk ImpStepPerDay](figure/ImpStepPerDay.png) 
@@ -164,7 +160,7 @@ from the original data set by 0.5493 and 3 respectively.
 ## Are there differences in activity patterns between weekdays and weekends?
 The next stage of the analysis examines the difference in mean steps per  
 interval between weekends and weekdays. First I must convert the dates to  
-a weekend/weekday factor.
+a weekend/weekday factor using the new data with imputed values.
 
 
 ```r
@@ -176,7 +172,7 @@ nData$weekDayRC <- as.factor(ifelse(test=nData$weekDay=="Sat" |
 
 Using the new data with the imputed values `nData` I then compute a new  
 data frame with the mean steps per inteval and call it `nMeanPerInt`. I  
-do a facetted plot to compare weekens to weekdays.
+do a facetted plot to compare weekends to weekdays.
 
 
 ```r

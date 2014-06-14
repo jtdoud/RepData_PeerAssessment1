@@ -192,7 +192,7 @@ anonumous individual collected during the months of October and November<br/>
 
 <h2>Loading and preprocessing the data</h2>
 
-<p>Loads the required library and imports the activty data. The date<br/>
+<p>Load the required library and import the activty data. The date<br/>
 column is converted to a date format recognizable by R.</p>
 
 <pre><code class="r">library(ggplot2)
@@ -207,7 +207,7 @@ data$date &lt;- as.Date(data$date)
 Plot the data using the ggplot2 package.</p>
 
 <pre><code class="r">stepPerDay &lt;- tapply(X=data$steps, INDEX=data$date, FUN=sum)
-stepPerDay &lt;- as.data.frame.array(x=stepPerDay)           
+stepPerDay &lt;- as.data.frame(x=stepPerDay)           
 
 ggplot(data=stepPerDay, aes(x=stepPerDay)) + geom_histogram() + 
         xlab(label= &quot;Steps per Day&quot;) + ylab(label= &quot;Count&quot;) +
@@ -266,16 +266,16 @@ observations</p>
 <pre><code>## [1] 2304
 </code></pre>
 
-<p>My next step is to impute the missing values. Since I already computed<br/>
+<p>My next task is to impute the missing values. Since I already computed<br/>
 the mean steps per inteval in the section above, I will use this data<br/>
 to fill in the missing values in the original data.</p>
 
-<p>First I add a rounded mean steps per interval to <code>meanPerInt</code>.</p>
+<p>First I add a rounded mean steps per interval to <code>meanPerInt</code> since there are not half-steps in reality. I call it <code>meanStepsR</code> for <em>rounded</em>.</p>
 
 <pre><code class="r">meanPerInt$meanStepsR &lt;- round(x=meanPerInt$meanSteps, digits=0)
 </code></pre>
 
-<p>Then I make data subset of the original NA observations and call it<br/>
+<p>Then I make a data subset of the original NA observations and call it<br/>
 <code>iData</code> for <em>imputed</em> data. I <code>merge</code> the data to the rounded mean steps<br/>
 from the <code>meanPerInt</code> data frame.</p>
 
@@ -285,8 +285,8 @@ iData &lt;- iData[, c(3,2,1)] #reorder for rbind
 names(iData) &lt;- names(data) #rename for rbind
 </code></pre>
 
-<p>Use <code>rbind</code> to link the imputed data subset with original complete<br/>
-observations and call it <code>nData</code> for <em>new data</em>.</p>
+<p>Use <code>rbind</code> to link the imputed data subset with original data - complete<br/>
+observations only - and call it <code>nData</code> for <em>new data</em>.</p>
 
 <pre><code class="r">nData &lt;- rbind(data[which(!is.na(data$steps)), ], iData)
 nData &lt;- nData[order(nData$date, nData$interval), ] #reorder
@@ -295,14 +295,11 @@ nData &lt;- nData[order(nData$date, nData$interval), ] #reorder
 <p>Compute the new <em>imputed</em> steps per day using <code>nData</code>. Make a histogram  with the new data.</p>
 
 <pre><code class="r">nStepPerDay &lt;- tapply(X=nData$steps, INDEX=nData$date, FUN=sum)
-nStepPerDay &lt;- as.data.frame.array(x=nStepPerDay) 
+nStepPerDay &lt;- as.data.frame(x=nStepPerDay) 
 
 ggplot(data=nStepPerDay, aes(x=nStepPerDay)) + geom_histogram() + 
         xlab(label= &quot;Steps per Day&quot;) + ylab(label= &quot;Count&quot;) +
         ggtitle(label= &quot;Histogram (Imputed Values)\nSteps per Day&quot;)
-</code></pre>
-
-<pre><code>## stat_bin: binwidth defaulted to range/30. Use &#39;binwidth = x&#39; to adjust this.
 </code></pre>
 
 <p><img src="data:image/png;base64,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" alt="plot of chunk ImpStepPerDay"/> </p>
@@ -328,7 +325,7 @@ from the original data set by 0.5493 and 3 respectively.</p>
 
 <p>The next stage of the analysis examines the difference in mean steps per<br/>
 interval between weekends and weekdays. First I must convert the dates to<br/>
-a weekend/weekday factor.</p>
+a weekend/weekday factor using the new data with imputed values.</p>
 
 <pre><code class="r">nData$weekDay &lt;- as.factor(weekdays(x=nData$date, abbreviate=T))
 nData$weekDayRC &lt;- as.factor(ifelse(test=nData$weekDay==&quot;Sat&quot; | 
@@ -338,7 +335,7 @@ nData$weekDayRC &lt;- as.factor(ifelse(test=nData$weekDay==&quot;Sat&quot; |
 
 <p>Using the new data with the imputed values <code>nData</code> I then compute a new<br/>
 data frame with the mean steps per inteval and call it <code>nMeanPerInt</code>. I<br/>
-do a facetted plot to compare weekens to weekdays.</p>
+do a facetted plot to compare weekends to weekdays.</p>
 
 <pre><code class="r">nMeanPerInt &lt;- aggregate.data.frame(x= nData[ , 1], 
                                    by= list(nData$interval,
