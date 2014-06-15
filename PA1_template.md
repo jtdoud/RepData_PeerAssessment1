@@ -4,12 +4,12 @@ Submitted by Tucker Doud
 The following report outlines in detail the steps required to process  
 and analyze activity data from a personal activity monitoring device.  
 The device collects data on _number of steps taken_ at 5 minute intervals  
-thoughout the day. The data consists of two months of data from an  
-anonumous individual collected during the months of October and November  
+throughout the day. The data consists of two months of data from an  
+anonymous individual collected during the months of October and November  
 2012. The original unprocessed file can be found [HERE](https://github.com/jtdoud/RepData_PeerAssessment1/tree/master/Data).
 
 ## Loading and preprocessing the data
-Load the required library and import the activty data. The date  
+Load the required library and import the activity data. The date  
 column is converted to a date format recognizable by R.
 
 
@@ -94,18 +94,19 @@ length(which(complete.cases(data)== F))
 ## [1] 2304
 ```
 
-My next task is to impute the missing values. Since I already computed  
-the mean steps per inteval in the section above, I will use this data  
-to fill in the missing values in the original data.
+The next task is to impute the missing values. Since the mean steps per  
+interval is already computed in the section above, this can be used to  
+fill in the missing values in the original data.
 
-First I add a rounded mean steps per interval to `meanPerInt` since there are not half-steps in reality. I call it `meanStepsR` for _rounded_.
+First, add a rounded mean steps per interval to `meanPerInt` since there  
+are not half-steps in reality. Call it `meanStepsR` for _rounded_.
 
 ```r
 meanPerInt$meanStepsR <- round(x=meanPerInt$meanSteps, digits=0)
 ```
 
-Then I make a data subset of the original NA observations and call it  
-`iData` for _imputed_ data. I `merge` the data to the rounded mean steps  
+Then, make a data subset of the original NA observations and call it  
+`iData` for _imputed_ data. `merge` the data to the rounded mean steps  
 from the `meanPerInt` data frame.
 
 ```r
@@ -123,7 +124,8 @@ nData <- rbind(data[which(!is.na(data$steps)), ], iData)
 nData <- nData[order(nData$date, nData$interval), ] #reorder
 ```
 
-Compute the new _imputed_ steps per day using `nData`. Make a histogram  with the new data.
+Compute the new _imputed_ steps per day using `nData`. Make a histogram  
+with the new data.
 
 ```r
 nStepPerDay <- tapply(X=nData$steps, INDEX=nData$date, FUN=sum)
@@ -159,7 +161,7 @@ from the original data set by 0.5493 and 3 respectively.
 
 ## Are there differences in activity patterns between weekdays and weekends?
 The next stage of the analysis examines the difference in mean steps per  
-interval between weekends and weekdays. First I must convert the dates to  
+interval between weekends and weekdays. First, convert the dates to  
 a weekend/weekday factor using the new data with imputed values.
 
 
@@ -170,9 +172,9 @@ nData$weekDayRC <- as.factor(ifelse(test=nData$weekDay=="Sat" |
                                 no="Weekday"))
 ```
 
-Using the new data with the imputed values `nData` I then compute a new  
-data frame with the mean steps per inteval and call it `nMeanPerInt`. I  
-do a facetted plot to compare weekends to weekdays.
+Then using the new data with the imputed values `nData` compute a new  
+data frame with the mean steps per interval and call it `nMeanPerInt`. Do  
+a faceted plot to compare weekends to weekdays.
 
 
 ```r
@@ -186,7 +188,7 @@ names(nMeanPerInt) <- c("interval", "weekDay", "meanSteps") #rename
 ggplot(data=nMeanPerInt, aes(x=interval, y=meanSteps)) + geom_line() +
         facet_grid(weekDay ~ .) +
         xlab(label= "Interval") + ylab(label= "Mean Steps") +
-        ggtitle(label= "Mean Steps per Interval (facetted)")
+        ggtitle(label= "Mean Steps per Interval (faceted)")
 ```
 
 ![plot of chunk FacetPlot](figure/FacetPlot.png) 
